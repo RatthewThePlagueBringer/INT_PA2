@@ -1,36 +1,37 @@
 import java.net.*;
 import java.io.*;
 
-public class Server {
+public class Server_UDP {
 
 	private static final int sPort = 8000;   // Server port number
 
 	public static void main(String[] args) throws Exception {
 		System.out.println("The server is running.");
-		ServerSocket listener = new ServerSocket(sPort);
-		Socket connection = listener.accept();
-		System.out.println("Client has connected.");
-
-		ObjectOutputStream out = null;
-		ObjectInputStream in = null;
+		DatagramSocket ds = null;
 
 		try {
 			// Initialize IO streams
-			out = new ObjectOutputStream(connection.getOutputStream());
-			out.flush();
-			in = new ObjectInputStream(connection.getInputStream());
+			ds = new DatagramSocket(sPort);
 			try {
 				while (true) {
 					// Read command from the client
-					String command = (String) in.readObject();
+					byte[] receiveData = new byte[1024];
+					DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+					ds.receive(receivePacket);
+					//make recieved data a string
+					String command = new String(receivePacket.getData(), 0, receivePacket.getLength());
+					InetAddress clientAddress = receivePacket.getAddress();
+					int clientPort = receivePacket.getPort();
 
 					if (command != null) {
 						System.out.println("Received command: " + command + " from client.");
 						// Split the command into args
 						String[] clientArgs = command.split("\\s+");
 						if (clientArgs.length == 1 && clientArgs[0].equals("bye")) {
-							out.writeObject("disconnected");
-							out.flush();
+							String msg = "disconnected";
+							byte[] msgBytes = msg.getBytes();
+							DatagramPacket sendPacket = new DatagramPacket(msgBytes, msgBytes.length, clientAddress, clientPort);
+							ds.send(sendPacket);
 							System.out.println("disconnected");
 							break;
 						}
@@ -51,22 +52,24 @@ public class Server {
 								fileReader.close();
 
 								String msg = jokeContent.toString();
-								out.writeObject(msg);
-								out.flush();
+								byte[] msgBytes = msg.getBytes();
+								DatagramPacket sendPacket = new DatagramPacket(msgBytes, msgBytes.length, clientAddress, clientPort);
+								ds.send(sendPacket);
 								System.out.println("Joke content sent to client: " + msg);
 							} catch (NumberFormatException | IOException e) {
 								String msg = "Joke not found or error reading joke file.";
-								out.writeObject(msg);
-								out.flush();
+								byte[] msgBytes = msg.getBytes();
+								DatagramPacket sendPacket = new DatagramPacket(msgBytes, msgBytes.length, clientAddress, clientPort);
+								ds.send(sendPacket);
 								System.out.println("Message sent to client: " + msg + "\n");
 							}
 						} else {
 							// Invalid command format
 							try {
 								String msg = "Invalid command format, please use 'Joke <number>'.";
-								out.writeObject(msg);
-								out.flush();
-								System.out.println("Message sent to client: " + msg);
+								byte[] msgBytes = msg.getBytes();
+								DatagramPacket sendPacket = new DatagramPacket(msgBytes, msgBytes.length, clientAddress, clientPort);
+								ds.send(sendPacket);
 							} catch (IOException ioException) {
 								// Debugging
 								ioException.printStackTrace();
@@ -74,20 +77,14 @@ public class Server {
 						}
 					}
 				}
-			} catch (ClassNotFoundException e) {
+			} catch (IOException e) {
 				System.err.println("Data received in unknown format.");
 			}
 		} catch (IOException ioException) {
 			System.out.println("disconnected");
 		} finally {
-			// Close connections
-			try {
-				in.close();
-				out.close();
-				connection.close();
-			} catch (IOException ioException) {
-				System.out.println("disconnected");
-			}
+			ds.close();
+			//System.out.println("disconnected");
 		}
 	}
 }
