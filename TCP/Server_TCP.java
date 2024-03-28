@@ -1,5 +1,7 @@
 import java.net.*;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Collections;
 
 public class Server_TCP {
 
@@ -26,6 +28,7 @@ public class Server_TCP {
 
 					if (command != null) {
 						System.out.println("Received command: " + command + " from client.");
+						
 						// Split the command into args
 						String[] clientArgs = command.split("\\s+");
 						if (clientArgs.length == 1 && clientArgs[0].equals("bye")) {
@@ -34,28 +37,56 @@ public class Server_TCP {
 							System.out.println("disconnected");
 							break;
 						}
-						// Check if args has length 2 and if the first element is "Joke"
-						if (clientArgs.length == 2 && clientArgs[0].equals("Joke")) {
-							// Send the requested joke
+
+						// Check if the command is "meme"
+						if (clientArgs[0].equals("Meme") || clientArgs[0].equals("meme")) {
+							// Send the 10 memes in random order
 							try {
-								int jokeNum = Integer.parseInt(clientArgs[1]);
-								String jokeFileName = "joke" + jokeNum + ".txt";
-								BufferedReader fileReader = new BufferedReader(new FileReader(jokeFileName));
-								StringBuilder jokeContent = new StringBuilder();
-								String line;
 
-								// Read through file
-								while ((line = fileReader.readLine()) != null) {
-									jokeContent.append(line).append("\n");
+								// Create an array with all of the memes
+								ArrayList<File> images = new ArrayList<>();
+
+								File image = new File("/memes/meme1.jpg");
+								images.add(image);
+								image = new File("/memes/meme2.jpg");
+								images.add(image);
+								image = new File("/memes/meme3.jpg");
+								images.add(image);
+								image = new File("/memes/meme4.jpg");
+								images.add(image);
+								image = new File("/memes/meme5.jpg");
+								images.add(image);
+								image = new File("/memes/meme6.jpg");
+								images.add(image);
+								image = new File("/memes/meme7.jpg");
+								images.add(image);
+								image = new File("/memes/meme8.jpg");
+								images.add(image);
+								image = new File("/memes/meme9.jpg");
+								images.add(image);
+								image = new File("/memes/meme10.jpg");
+								images.add(image);
+
+								// Randomize the array
+								Collections.shuffle(images);
+
+								for (int i = 0; i < 11; i++) {
+									// Load the ith image
+									FileInputStream fis = new FileInputStream(images.get(i));
+									byte[] imageData = new byte[(int) images.get(i).length()];
+									fis.read(imageData);
+									fis.close();
+
+									// Write ith image to stream
+									out.write(imageData);
+									System.out.println("Meme " + i + " sent to client");
 								}
-								fileReader.close();
 
-								String msg = jokeContent.toString();
-								out.writeObject(msg);
 								out.flush();
-								System.out.println("Joke content sent to client: " + msg);
+								System.out.println("All memes sent to client");
+
 							} catch (NumberFormatException | IOException e) {
-								String msg = "Joke not found or error reading joke file.";
+								String msg = "Error reading meme image files";
 								out.writeObject(msg);
 								out.flush();
 								System.out.println("Message sent to client: " + msg + "\n");
@@ -63,7 +94,7 @@ public class Server_TCP {
 						} else {
 							// Invalid command format
 							try {
-								String msg = "Invalid command format, please use 'Joke <number>'.";
+								String msg = "Invalid command format";
 								out.writeObject(msg);
 								out.flush();
 								System.out.println("Message sent to client: " + msg);
