@@ -1,7 +1,7 @@
 import java.net.*;
 import java.io.*;
 
-public class Server {
+public class Server_TCP {
 
 	private static final int sPort = 8000;   // Server port number
 

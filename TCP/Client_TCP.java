@@ -1,7 +1,7 @@
 import java.net.*;
 import java.io.*;
 
-public class Client {
+public class Client_TCP {
 	private static final int cPort = 8000; // Client port number
 	public static void main(String args[]) {
 		Socket requestSocket = null;
