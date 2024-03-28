@@ -28,7 +28,7 @@ public class Server_TCP {
 
 					if (command != null) {
 						System.out.println("Received command: " + command + " from client.");
-						
+
 						// Split the command into args
 						String[] clientArgs = command.split("\\s+");
 						if (clientArgs.length == 1 && clientArgs[0].equals("bye")) {
@@ -42,6 +42,8 @@ public class Server_TCP {
 						if (clientArgs[0].equals("Meme") || clientArgs[0].equals("meme")) {
 							// Send the 10 memes in random order
 							try {
+
+								out.writeObject("memes");
 
 								// Create an array with all of the memes
 								ArrayList<File> images = new ArrayList<>();
@@ -70,7 +72,7 @@ public class Server_TCP {
 								// Randomize the array
 								Collections.shuffle(images);
 
-								for (int i = 0; i < 11; i++) {
+								for (int i = 0; i < 10; i++) {
 									// Load the ith image
 									FileInputStream fis = new FileInputStream(images.get(i));
 									byte[] imageData = new byte[(int) images.get(i).length()];

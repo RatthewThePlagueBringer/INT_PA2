@@ -1,7 +1,5 @@
 import java.net.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
 
 public class Client_TCP {
 	private static final int cPort = 8000; // Client port number
@@ -9,7 +7,8 @@ public class Client_TCP {
 		Socket requestSocket = null;
 		ObjectOutputStream out = null;
 		ObjectInputStream in = null;
-		String joke;
+		String memeStr;
+		int counter;
 
 		try {
 			// Create a socket to connect to the server
@@ -25,8 +24,10 @@ public class Client_TCP {
 			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
 			while (true) {
 				System.out.print("Input a command: ");
+
 				// Read in a command
 				String msg = bufferedReader.readLine();
+
 				// Send the command to the server
 				try {
 					// Write the message to output stream
@@ -35,16 +36,45 @@ public class Client_TCP {
 				} catch (IOException ioException) {
 					ioException.printStackTrace();
 				}
+
 				// Receive the response from the server
 				try {
-					joke = (String) in.readObject();
-					// If received "disconnected" message from server, terminate client and print "exit"
-					if ("disconnected".equals(joke)) {
+					memeStr = (String) in.readObject();
+					// If the first object sent is a string that says "memes", receive 10 image files
+					if ("memes".equals(memeStr)) {
+
+						// Read image data from socket
+						ByteArrayOutputStream baos = new ByteArrayOutputStream();
+						byte[] buffer = new byte[1024];
+						int bytesRead;
+
+						// Loop 10 times
+						for (int i = 1; i < 11; i++) {
+							while ((bytesRead = in.read(buffer)) != -1) {
+								baos.write(buffer, 0, bytesRead);
+								if (bytesRead < buffer.length) {
+									break;
+								}
+							}
+
+							// Convert byte array to image and save it
+							byte[] imageData = baos.toByteArray();
+							String fileName = "received_image" + i + ".jpg";
+							FileOutputStream fos = new FileOutputStream(fileName);
+							fos.write(imageData);
+
+							fos.close();
+							baos.close();
+							System.out.println("Image " + i + " received and saved!");
+						}
+						
+						System.out.println("All memes saved!");
+					}
+					
+					else {
 						System.out.println("exit");
 						break;
 					}
-					// Show the joke content to the user
-					System.out.println(joke);
 				} catch (IOException ioException) {
 					ioException.printStackTrace();
 				} catch (ClassNotFoundException classNotFoundException) {
