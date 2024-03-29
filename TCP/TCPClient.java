@@ -20,7 +20,7 @@ public class TCPClient {
 		try {
 			// Create a socket to connect to the server
 			startTime = System.nanoTime();
-			requestSocket = new Socket("localhost", cPort);
+			requestSocket = new Socket("localhost", cPort); //192.168.1.15
 			endTime = System.nanoTime();
 			double setupTime = (endTime - startTime) / 1e6;
 			System.out.println("TCP Setup Time: " + setupTime + " ms");
@@ -89,6 +89,8 @@ public class TCPClient {
 									imageIndex++;
 									out.writeObject("Confirmation");
 									out.flush();
+									// Wait for confirmation from the server
+									String confirmation = (String) in.readObject();
 								} catch (IOException e) {
 									e.printStackTrace();
 								}
