@@ -53,7 +53,7 @@ public class UDPServer {
 
 							// Send the 10 memes in random order
 							try {
-
+								System.out.println();
 								// Create an array with all of the memes
 								ArrayList<File> images = new ArrayList<>();
 

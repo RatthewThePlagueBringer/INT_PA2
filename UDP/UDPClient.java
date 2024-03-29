@@ -51,7 +51,7 @@ public class UDPClient {
 					// If the datagram sent is "memes", receive 10 image files
 					if (confirm.equals("memes")) {
 						int imageIndex = 1;
-						while (true) {
+						while (imageIndex < 11) {
 
 							memeStr = new byte[1024];
 							receive = new DatagramPacket(memeStr, memeStr.length);
@@ -60,11 +60,9 @@ public class UDPClient {
 
 							if (confirm.equals("next")) {
 								try {
-									System.out.println("creating byte stream");
 									byte[] imageData = new byte[1024];
 									ByteArrayOutputStream baos = new ByteArrayOutputStream();
 									startTime = System.nanoTime();
-									System.out.println("collecting fragments");
 									// Collect fragments and write them to a byte stream
 									while (true) {
 										try {
@@ -72,16 +70,13 @@ public class UDPClient {
 											ds.receive(receivePacket);
 											baos.write(imageData, 0, receivePacket.getLength());
 											if (receivePacket.getLength() < 1024) {
-												System.out.println("     limit reached, breaking");
 												break;
 											}
 										} catch (SocketTimeoutException e) {
-											System.err.println("Timeout occurred, skipping packet");
 											break;
 										}
 									}
 									
-									System.out.println("writing byte stream to file");
 									// Write byte stream to image file
 									imageData = baos.toByteArray();
 									String fileName = "received_image" + imageIndex + ".jpg";
