@@ -41,52 +41,49 @@ public class Client_TCP {
 					memeStr = (String) in.readObject();
 					// If the first object sent is a string that says "memes", receive 10 image files
 					if ("memes".equals(memeStr)) {
+						int imageIndex = 1;
+						while (true) {
+							memeStr = (String) in.readObject();
+							if (memeStr.equals("next")) {
+								byte[] imageData = null;
+								try {
 
-						// Read image data from socket
-						ByteArrayOutputStream baos = new ByteArrayOutputStream();
-						byte[] buffer = new byte[1024];
-						int bytesRead;
+									ByteArrayOutputStream baos = new ByteArrayOutputStream();
+									byte[] buffer = new byte[1024];
+									int bytesRead;
+									// Read image data into byte array
+									while ((bytesRead = in.read(buffer)) != -1) {
+										baos.write(buffer, 0, bytesRead);
+										if (bytesRead < buffer.length) {
+											System.out.println("buffer limit reached, breaking while loop");
+											break;
+										}
+									}
 
-						// Loop 10 times
-						for (int i = 1; i < 11; i++) {
-							System.out.println("starting loop " + i);
+									imageData = baos.toByteArray();
+									System.out.println("creating image object");
+									String fileName = "received_image" + imageIndex + ".jpg";
+									FileOutputStream fos = new FileOutputStream(fileName);
+									System.out.println("writing byte array to image file stream");
+									fos.write(imageData);
 
-							System.out.println("resetting byte buffer");
-							buffer = new byte[1024];
-
-							//////////////////////////////////////////////////////////////////////////
-							System.out.println("updating byte stream, starting while loop");
-
-							while ((bytesRead = in.read(buffer)) != -1) {
-								System.out.println("current bytesRead: " + bytesRead);
-
-								System.out.println("writing to stream");
-								baos.write(buffer, 0, bytesRead);
-								
-								if (bytesRead < buffer.length) {
-									System.out.println("buffer limit reached, breaking while loop");
-									break;
+									System.out.println("closing streams");
+									fos.close();
+									baos.close();
+									imageIndex++;
+									System.out.println("Image " + imageIndex + " received and saved!");
+									out.writeObject("Confirmation");
+									out.flush();
+								} catch (IOException e) {
+									e.printStackTrace();
 								}
 							}
-							////////////////////////////////////////////////////////////////////////////
-							System.out.println("saving byte stream data to byte array");
-							// Convert byte array to image and save it
-							byte[] imageData = baos.toByteArray();
-							System.out.println("creating image object");
-							String fileName = "received_image" + i + ".jpg";
-							FileOutputStream fos = new FileOutputStream(fileName);
-							System.out.println("writing byte array to image file stream");
-							fos.write(imageData);
-
-							System.out.println("closing streams");
-							fos.close();
-							baos.close();
-							System.out.println("Image " + i + " received and saved!");
+							else {
+								break;
+							}
 						}
-						
-						System.out.println("All memes saved!");
 					}
-					
+
 					else if ("disconnected".equals(memeStr)){
 						System.out.println("exit");
 						break;
@@ -120,5 +117,10 @@ public class Client_TCP {
 				ioException.printStackTrace();
 			}
 		}
+	}
+
+	private static boolean isMarker(byte[] data) {
+		byte[] marker = { -1, -1, -1, -1 }; // Example marker byte array
+		return data.length == marker.length && java.util.Arrays.equals(data, marker);
 	}
 }

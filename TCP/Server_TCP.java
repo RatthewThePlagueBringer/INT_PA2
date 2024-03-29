@@ -74,23 +74,17 @@ public class Server_TCP {
 								// Randomize the array
 								Collections.shuffle(images);
 								System.out.println("images shuffled, sending memes");
+								System.out.println(images.size());
 
-								for (int i = 0; i < 10; i++) {
-									// Load the ith image
-									System.out.println("Sending meme " + i);
-
-									// the error occurs right here ////////////////////////////////////////////////////////
-
-									System.out.println("copying image object to temporary container");
-									File imageTemp = images.get(i);
+								for (File imageFile : images) {
+									out.writeObject("next");
+									out.flush();
 
 									System.out.println("creating file input stream");
-									FileInputStream fis = new FileInputStream(imageTemp);
-
-									//////////////////////////////////////////////////////////////////////////////////////
+									FileInputStream fis = new FileInputStream(imageFile);
 
 									System.out.println("creating byte array");
-									byte[] imageData = new byte[(int) imageTemp.length()];
+									byte[] imageData = new byte[(int) imageFile.length()];
 
 									System.out.println("pushing array to file input stream");
 									fis.read(imageData);
@@ -98,12 +92,16 @@ public class Server_TCP {
 									System.out.println("closing file input stream");
 									fis.close();
 
-									// Write ith image to stream
+									// Write image to stream
 									System.out.println("writing image to output stream");
 									out.write(imageData);
-									System.out.println("Meme " + i + " sent to client");
-								}
+									out.flush();
+									out.reset();
 
+									// Wait for confirmation from the client
+									String confirmation = (String) in.readObject();
+									System.out.println("Received confirmation: " + confirmation);
+								}
 								out.flush();
 								System.out.println("All memes sent to client");
 
