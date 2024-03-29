@@ -3,6 +3,7 @@ import java.io.*;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 public class TCPClient {
 	private static final int cPort = 8000; // Client port number
@@ -56,6 +57,7 @@ public class TCPClient {
 					if ("memes".equals(memeStr)) {
 						int imageIndex = 1;
 						while (true) {
+							TimeUnit.SECONDS.sleep(1);
 							memeStr = (String) in.readObject();
 							if (memeStr.equals("next")) {
 								byte[] imageData = null;
@@ -112,8 +114,10 @@ public class TCPClient {
 					ioException.printStackTrace();
 				} catch (ClassNotFoundException classNotFoundException) {
 					classNotFoundException.printStackTrace();
-				}
-			}
+				} catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
 		} catch (ConnectException e) {
 			System.err.println("Connection refused, initiate a server first.");
 		} catch (UnknownHostException unknownHost) {
