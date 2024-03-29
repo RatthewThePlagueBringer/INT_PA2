@@ -1,15 +1,26 @@
 import java.net.*;
+import java.util.Arrays;
 import java.io.*;
 
 public class UDPClient {
 	private static final int cPort = 8000; // Client port number
 	public static void main(String args[]) {
 		DatagramSocket ds = null;
+
+		long startTime;
+		long endTime;
+
+		double[] RTTs = new double[10];
 		
 		try {
+			startTime = System.nanoTime();
 			ds = new DatagramSocket();
 			ds.setSoTimeout(1000);
 			InetAddress ip = InetAddress.getLocalHost(); 
+			endTime = System.nanoTime();
+			double setupTime = (endTime - startTime) / 1e6;
+			System.out.println("TCP Setup Time: " + setupTime + " ms");
+
 			// Create a socket to connect to the server
 			System.out.println("Connected to localhost in port " + cPort);
 			System.out.println("Hello!");
@@ -52,7 +63,7 @@ public class UDPClient {
 									System.out.println("creating byte stream");
 									byte[] imageData = new byte[1024];
 									ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
+									startTime = System.nanoTime();
 									System.out.println("collecting fragments");
 									// Collect fragments and write them to a byte stream
 									while (true) {
@@ -76,6 +87,12 @@ public class UDPClient {
 									String fileName = "received_image" + imageIndex + ".jpg";
 									FileOutputStream fos = new FileOutputStream(fileName);
 									fos.write(imageData);
+
+									endTime = System.nanoTime();
+									double RTT = (endTime - startTime) / 1e6;
+									RTTs[imageIndex - 1] = RTT;
+									System.out.println("RTT: " + RTT + " ms");
+
 									fos.close();
 
 									System.out.println("Image " + imageIndex + " received and saved!");
@@ -94,9 +111,11 @@ public class UDPClient {
 								break;
 							}
 						}
-
 							
 					}
+					System.out.println();
+					System.out.println("RTT Statistics");
+					printStats(RTTs);
 					
 				} catch (IOException ioException) {
 					ioException.printStackTrace();
@@ -114,5 +133,38 @@ public class UDPClient {
 				ds.close();
 			}
 		}
+	}
+	public static void printStats(double[] data) {
+		// Calculate minimum, maximum, and median
+		Arrays.sort(data);
+		double min = data[0];
+		double max = data[data.length - 1];
+		double median;
+		if (data.length % 2 == 0) {
+			median = (data[data.length / 2] + data[data.length / 2 - 1]) / 2.0;
+		} else {
+			median = data[data.length / 2];
+		}
+
+		// Mean
+		double sum = 0;
+		for (double value : data) {
+			sum += value;
+		}
+		double mean = sum / data.length;
+
+		// Calculate variance and standard deviation
+		double variance = 0;
+		for (double value : data) {
+			variance += Math.pow(value - mean, 2);
+		}
+		variance /= data.length;
+		double stddev = Math.sqrt(variance);
+
+		// Output results
+		System.out.println("Minimum: " + min);
+		System.out.println("Maximum: " + max);
+		System.out.println("Median: " + median);
+		System.out.println("Standard Deviation: " + stddev);
 	}
 }
