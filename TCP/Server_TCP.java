@@ -47,39 +47,59 @@ public class Server_TCP {
 
 								// Create an array with all of the memes
 								ArrayList<File> images = new ArrayList<>();
+								System.out.println("appending images");
 
-								File image = new File("/memes/meme1.jpg");
+								File image = new File("meme1.jpg");
 								images.add(image);
-								image = new File("/memes/meme2.jpg");
+								image = new File("meme2.jpg");
 								images.add(image);
-								image = new File("/memes/meme3.jpg");
+								image = new File("meme3.jpg");
 								images.add(image);
-								image = new File("/memes/meme4.jpg");
+								image = new File("meme4.jpg");
 								images.add(image);
-								image = new File("/memes/meme5.jpg");
+								image = new File("meme5.jpg");
 								images.add(image);
-								image = new File("/memes/meme6.jpg");
+								image = new File("meme6.jpg");
 								images.add(image);
-								image = new File("/memes/meme7.jpg");
+								image = new File("meme7.jpg");
 								images.add(image);
-								image = new File("/memes/meme8.jpg");
+								image = new File("meme8.jpg");
 								images.add(image);
-								image = new File("/memes/meme9.jpg");
+								image = new File("meme9.jpg");
 								images.add(image);
-								image = new File("/memes/meme10.jpg");
+								image = new File("meme10.jpg");
 								images.add(image);
+								System.out.println("images successfully appended to array");
 
 								// Randomize the array
 								Collections.shuffle(images);
+								System.out.println("images shuffled, sending memes");
 
 								for (int i = 0; i < 10; i++) {
 									// Load the ith image
-									FileInputStream fis = new FileInputStream(images.get(i));
-									byte[] imageData = new byte[(int) images.get(i).length()];
+									System.out.println("Sending meme " + i);
+
+									// the error occurs right here ////////////////////////////////////////////////////////
+
+									System.out.println("copying image object to temporary container");
+									File imageTemp = images.get(i);
+
+									System.out.println("creating file input stream");
+									FileInputStream fis = new FileInputStream(imageTemp);
+
+									//////////////////////////////////////////////////////////////////////////////////////
+
+									System.out.println("creating byte array");
+									byte[] imageData = new byte[(int) imageTemp.length()];
+
+									System.out.println("pushing array to file input stream");
 									fis.read(imageData);
+
+									System.out.println("closing file input stream");
 									fis.close();
 
 									// Write ith image to stream
+									System.out.println("writing image to output stream");
 									out.write(imageData);
 									System.out.println("Meme " + i + " sent to client");
 								}
@@ -91,7 +111,7 @@ public class Server_TCP {
 								String msg = "Error reading meme image files";
 								out.writeObject(msg);
 								out.flush();
-								System.out.println("Message sent to client: " + msg + "\n");
+								System.out.println("Message sent to client: " + e + "\n");
 							}
 						} else {
 							// Invalid command format
