@@ -1,5 +1,8 @@
 import java.net.*;
 import java.io.*;
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.ArrayList;
 
 public class TCPClient {
 	private static final int cPort = 8000; // Client port number
@@ -9,9 +12,19 @@ public class TCPClient {
 		ObjectInputStream in = null;
 		String memeStr;
 
+		long startTime;
+		long endTime;
+
+		double[] RTTs = new double[10];
+
 		try {
 			// Create a socket to connect to the server
+			startTime = System.nanoTime();
 			requestSocket = new Socket("localhost", cPort);
+			endTime = System.nanoTime();
+			double setupTime = (endTime - startTime) / 1e6;
+			System.out.println("TCP Setup Time: " + setupTime + " ms");
+
 			System.out.println("Connected to localhost in port " + cPort);
 			System.out.println("Hello!");
 
@@ -47,31 +60,32 @@ public class TCPClient {
 							if (memeStr.equals("next")) {
 								byte[] imageData = null;
 								try {
-
 									ByteArrayOutputStream baos = new ByteArrayOutputStream();
 									byte[] buffer = new byte[1024];
 									int bytesRead;
+									startTime = System.nanoTime();
 									// Read image data into byte array
 									while ((bytesRead = in.read(buffer)) != -1) {
 										baos.write(buffer, 0, bytesRead);
 										if (bytesRead < buffer.length) {
-											System.out.println("buffer limit reached, breaking while loop");
 											break;
 										}
 									}
 
 									imageData = baos.toByteArray();
-									System.out.println("creating image object");
 									String fileName = "received_image" + imageIndex + ".jpg";
 									FileOutputStream fos = new FileOutputStream(fileName);
-									System.out.println("writing byte array to image file stream");
 									fos.write(imageData);
+									endTime = System.nanoTime();
+									double RTT = (endTime - startTime) / 1e6;
+									RTTs[imageIndex - 1] = RTT;
+									System.out.println("Image " + imageIndex + " received and saved!");
+									System.out.println("RTT: " + RTT + " ms");
 
-									System.out.println("closing streams");
 									fos.close();
 									baos.close();
 
-									System.out.println("Image " + imageIndex + " received and saved!");
+
 									imageIndex++;
 									out.writeObject("Confirmation");
 									out.flush();
@@ -79,16 +93,19 @@ public class TCPClient {
 									e.printStackTrace();
 								}
 							}
-							else {
+							else if (memeStr.equals("done")) {
 								break;
 							}
 						}
-					}
 
+					}
 					else if ("disconnected".equals(memeStr)){
 						System.out.println("exit");
 						break;
 					}
+					System.out.println();
+					System.out.println("RTT Statistics");
+					printStats(RTTs);
 				} catch (IOException ioException) {
 					ioException.printStackTrace();
 				} catch (ClassNotFoundException classNotFoundException) {
@@ -120,8 +137,37 @@ public class TCPClient {
 		}
 	}
 
-	private static boolean isMarker(byte[] data) {
-		byte[] marker = { -1, -1, -1, -1 }; // Example marker byte array
-		return data.length == marker.length && java.util.Arrays.equals(data, marker);
+	public static void printStats(double[] data) {
+		// Calculate minimum, maximum, and median
+		Arrays.sort(data);
+		double min = data[0];
+		double max = data[data.length - 1];
+		double median;
+		if (data.length % 2 == 0) {
+			median = (data[data.length / 2] + data[data.length / 2 - 1]) / 2.0;
+		} else {
+			median = data[data.length / 2];
+		}
+
+		// Mean
+		double sum = 0;
+		for (double value : data) {
+			sum += value;
+		}
+		double mean = sum / data.length;
+
+		// Calculate variance and standard deviation
+		double variance = 0;
+		for (double value : data) {
+			variance += Math.pow(value - mean, 2);
+		}
+		variance /= data.length;
+		double stddev = Math.sqrt(variance);
+
+		// Output results
+		System.out.println("Minimum: " + min);
+		System.out.println("Maximum: " + max);
+		System.out.println("Median: " + median);
+		System.out.println("Standard Deviation: " + stddev);
 	}
 }

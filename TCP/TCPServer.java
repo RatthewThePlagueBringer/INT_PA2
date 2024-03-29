@@ -1,6 +1,7 @@
 import java.net.*;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 
 public class TCPServer {
@@ -15,6 +16,12 @@ public class TCPServer {
 
 		ObjectOutputStream out = null;
 		ObjectInputStream in = null;
+
+		long startTime;
+		long endTime;
+
+		double[] localAccesses = new double[10];
+
 
 		try {
 			// Initialize IO streams
@@ -49,61 +56,46 @@ public class TCPServer {
 								ArrayList<File> images = new ArrayList<>();
 								System.out.println("appending images");
 
-								File image = new File("meme1.jpg");
-								images.add(image);
-								image = new File("meme2.jpg");
-								images.add(image);
-								image = new File("meme3.jpg");
-								images.add(image);
-								image = new File("meme4.jpg");
-								images.add(image);
-								image = new File("meme5.jpg");
-								images.add(image);
-								image = new File("meme6.jpg");
-								images.add(image);
-								image = new File("meme7.jpg");
-								images.add(image);
-								image = new File("meme8.jpg");
-								images.add(image);
-								image = new File("meme9.jpg");
-								images.add(image);
-								image = new File("meme10.jpg");
-								images.add(image);
-								System.out.println("images successfully appended to array");
+								for (int i = 1; i <= 10; i++) {
+									startTime = System.nanoTime();
+									File image = new File("meme" + i + ".jpg");
+									endTime = System.nanoTime();
+									double localAccess = (endTime - startTime) / 1e6;
+									localAccesses[i - 1] = localAccess;
+									System.out.println("Local Access Time " + i + ": " + localAccess + "ms");
+									images.add(image);
+								}
+								System.out.println();
+								System.out.println("Local Access Times Statistics");
+								printStats(localAccesses);
 
 								// Randomize the array
 								Collections.shuffle(images);
-								System.out.println("images shuffled, sending memes");
-								System.out.println(images.size());
 
 								for (File imageFile : images) {
 									out.writeObject("next");
 									out.flush();
 
-									System.out.println("creating file input stream");
 									FileInputStream fis = new FileInputStream(imageFile);
 
-									System.out.println("creating byte array");
 									byte[] imageData = new byte[(int) imageFile.length()];
 
-									System.out.println("pushing array to file input stream");
 									fis.read(imageData);
 
-									System.out.println("closing file input stream");
 									fis.close();
 
 									// Write image to stream
-									System.out.println("writing image to output stream");
 									out.write(imageData);
 									out.flush();
 									out.reset();
 
 									// Wait for confirmation from the client
 									String confirmation = (String) in.readObject();
-									System.out.println("Received confirmation: " + confirmation);
 								}
 								out.flush();
 								System.out.println("All memes sent to client");
+								out.writeObject("done");
+								out.flush();
 
 							} catch (NumberFormatException | IOException e) {
 								String msg = "Error reading meme image files";
@@ -140,5 +132,39 @@ public class TCPServer {
 				System.out.println("disconnected");
 			}
 		}
+	}
+
+	public static void printStats(double[] data) {
+		// Calculate minimum, maximum, and median
+		Arrays.sort(data);
+		double min = data[0];
+		double max = data[data.length - 1];
+		double median;
+		if (data.length % 2 == 0) {
+			median = (data[data.length / 2] + data[data.length / 2 - 1]) / 2.0;
+		} else {
+			median = data[data.length / 2];
+		}
+
+		// Mean
+		double sum = 0;
+		for (double value : data) {
+			sum += value;
+		}
+		double mean = sum / data.length;
+
+		// Calculate variance and standard deviation
+		double variance = 0;
+		for (double value : data) {
+			variance += Math.pow(value - mean, 2);
+		}
+		variance /= data.length;
+		double stddev = Math.sqrt(variance);
+
+		// Output results
+		System.out.println("Minimum: " + min);
+		System.out.println("Maximum: " + max);
+		System.out.println("Median: " + median);
+		System.out.println("Standard Deviation: " + stddev);
 	}
 }
