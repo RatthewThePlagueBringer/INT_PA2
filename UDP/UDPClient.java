@@ -5,7 +5,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket; 
 import java.net.InetAddress;
 
-public class Client_UDP {
+public class UDPClient {
 	private static final int cPort = 8000; // Client port number
 	public static void main(String args[]) {
 		DatagramSocket ds = null;

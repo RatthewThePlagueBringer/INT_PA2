@@ -3,7 +3,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 
-public class Server_TCP {
+public class TCPServer {
 
 	private static final int sPort = 8000;   // Server port number
 

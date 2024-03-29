@@ -1,7 +1,7 @@
 import java.net.*;
 import java.io.*;
 
-public class Client_TCP {
+public class TCPClient {
 	private static final int cPort = 8000; // Client port number
 	public static void main(String args[]) {
 		Socket requestSocket = null;
@@ -70,8 +70,9 @@ public class Client_TCP {
 									System.out.println("closing streams");
 									fos.close();
 									baos.close();
-									imageIndex++;
+
 									System.out.println("Image " + imageIndex + " received and saved!");
+									imageIndex++;
 									out.writeObject("Confirmation");
 									out.flush();
 								} catch (IOException e) {

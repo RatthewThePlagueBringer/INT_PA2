@@ -1,7 +1,7 @@
 import java.net.*;
 import java.io.*;
 
-public class Server_UDP {
+public class UDPServer {
 
 	private static final int sPort = 8000;   // Server port number
 
