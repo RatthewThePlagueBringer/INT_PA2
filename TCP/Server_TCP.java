@@ -43,7 +43,7 @@ public class Server_TCP {
 							// Send the 10 memes in random order
 							try {
 
-								out.writeObject("memes");
+								out.writeObject("sending");
 
 								// Create an array with all of the memes
 								ArrayList<File> images = new ArrayList<>();
@@ -75,19 +75,28 @@ public class Server_TCP {
 								Collections.shuffle(images);
 								System.out.println("images shuffled, sending memes");
 
+								
+
 								for (int i = 0; i < 10; i++) {
+
+									System.out.println("waiting for confirmation from client");
+									while (true) {
+										String str = (String) in.readObject();
+										if ("ready".equals(str)) {
+											System.out.println("confirmation received from client");
+											out.writeObject("sending image");
+											break;
+										}
+									}
+
 									// Load the ith image
 									System.out.println("Sending meme " + i);
-
-									// the error occurs right here ////////////////////////////////////////////////////////
 
 									System.out.println("copying image object to temporary container");
 									File imageTemp = images.get(i);
 
 									System.out.println("creating file input stream");
 									FileInputStream fis = new FileInputStream(imageTemp);
-
-									//////////////////////////////////////////////////////////////////////////////////////
 
 									System.out.println("creating byte array");
 									byte[] imageData = new byte[(int) imageTemp.length()];
@@ -102,6 +111,7 @@ public class Server_TCP {
 									System.out.println("writing image to output stream");
 									out.write(imageData);
 									System.out.println("Meme " + i + " sent to client");
+									System.out.println(" ");
 								}
 
 								out.flush();

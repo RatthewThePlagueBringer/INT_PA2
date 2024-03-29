@@ -39,8 +39,9 @@ public class Client_TCP {
 				// Receive the response from the server
 				try {
 					memeStr = (String) in.readObject();
-					// If the first object sent is a string that says "memes", receive 10 image files
-					if ("memes".equals(memeStr)) {
+					// If the first object sent is a string that says "sending", prepare to receive 10 image files
+					if ("sending".equals(memeStr)) {
+
 
 						// Read image data from socket
 						ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -49,10 +50,20 @@ public class Client_TCP {
 
 						// Loop 10 times
 						for (int i = 1; i < 11; i++) {
-							System.out.println("starting loop " + i);
 
-							System.out.println("resetting byte buffer");
-							buffer = new byte[1024];
+							
+
+							System.out.println("waiting for confirmation from server");
+							while (true) {
+								out.writeObject("ready");
+								String str = (String) in.readObject();
+								if ("sending image".equals(str)) {
+									System.out.println("confirmation received from server");
+									break;
+								}
+							}
+
+							System.out.println("starting loop " + i);
 
 							//////////////////////////////////////////////////////////////////////////
 							System.out.println("updating byte stream, starting while loop");
@@ -83,6 +94,7 @@ public class Client_TCP {
 							baos.close();
 							System.out.println("Image " + i + " received and saved!");
 						}
+
 						
 						System.out.println("All memes saved!");
 					}
