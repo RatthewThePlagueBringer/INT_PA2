@@ -1,5 +1,8 @@
 import java.net.*;
 import java.io.*;
+import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 
 public class UDPServer {
 
@@ -35,40 +38,94 @@ public class UDPServer {
 							System.out.println("disconnected");
 							break;
 						}
-						// Check if args has length 2 and if the first element is "Joke"
-						if (clientArgs.length == 2 && clientArgs[0].equals("Joke")) {
-							// Send the requested joke
+						// Check if the command is "meme"
+						if (clientArgs[0].equals("Meme") || clientArgs[0].equals("meme")) {
+
+							String msg = "memes";
+							byte[] msgData = msg.getBytes();
+							DatagramPacket confirmation = new DatagramPacket(msgData, msgData.length, clientAddress, clientPort);
+							ds.send(confirmation);
+
+							// Send the 10 memes in random order
 							try {
-								int jokeNum = Integer.parseInt(clientArgs[1]);
-								String jokeFileName = "joke" + jokeNum + ".txt";
-								BufferedReader fileReader = new BufferedReader(new FileReader(jokeFileName));
-								StringBuilder jokeContent = new StringBuilder();
-								String line;
+								
 
-								// Read through file
-								while ((line = fileReader.readLine()) != null) {
-									jokeContent.append(line).append("\n");
+								// Create an array with all of the memes
+								ArrayList<File> images = new ArrayList<>();
+								System.out.println("appending images");
+
+								File image = new File("meme1.jpg");
+								images.add(image);
+								image = new File("meme2.jpg");
+								images.add(image);
+								image = new File("meme3.jpg");
+								images.add(image);
+								image = new File("meme4.jpg");
+								images.add(image);
+								image = new File("meme5.jpg");
+								images.add(image);
+								image = new File("meme6.jpg");
+								images.add(image);
+								image = new File("meme7.jpg");
+								images.add(image);
+								image = new File("meme8.jpg");
+								images.add(image);
+								image = new File("meme9.jpg");
+								images.add(image);
+								image = new File("meme10.jpg");
+								images.add(image);
+								System.out.println("images successfully appended to array");
+
+								// Randomize the array
+								Collections.shuffle(images);
+								System.out.println("images shuffled, sending memes");
+								System.out.println(" ");
+								
+								for (File imageFile : images) {
+									
+									msg = "next";
+									msgData = msg.getBytes();
+									confirmation = new DatagramPacket(msgData, msgData.length, clientAddress, clientPort);
+									ds.send(confirmation);
+
+									FileInputStream fis = new FileInputStream(imageFile);
+									byte[] imageData = new byte[(int) imageFile.length()];
+									fis.close();
+
+									// Split byte array into chunks and send them
+									int numChunks = (int) Math.ceil((double) imageData.length / 1024);
+									for (int i = 0; i < numChunks; i++) {
+										int offset = i * 1024;
+										int length = Math.min(2024, imageData.length - offset);
+										byte[] chunkData = Arrays.copyOfRange(imageData, offset, offset + length);
+
+										DatagramPacket sendPacket = new DatagramPacket(chunkData, chunkData.length, clientAddress, clientPort);
+										ds.send(sendPacket);
+									}
+
+									System.out.println("Image sent");
+									
+									byte[] memeStr = new byte[1024];
+									DatagramPacket receive = new DatagramPacket(memeStr, memeStr.length);
+									ds.receive(receive);
+									String confirm = new String(receive.getData(), 0, receive.getLength());
+
 								}
-								fileReader.close();
+								System.out.println("All images sent!");
 
-								String msg = jokeContent.toString();
-								byte[] msgBytes = msg.getBytes();
-								DatagramPacket sendPacket = new DatagramPacket(msgBytes, msgBytes.length, clientAddress, clientPort);
-								ds.send(sendPacket);
-								System.out.println("Joke content sent to client: " + msg);
 							} catch (NumberFormatException | IOException e) {
-								String msg = "Joke not found or error reading joke file.";
-								byte[] msgBytes = msg.getBytes();
-								DatagramPacket sendPacket = new DatagramPacket(msgBytes, msgBytes.length, clientAddress, clientPort);
+								msg = "Error reading meme image files";
+								msgData = msg.getBytes();
+								DatagramPacket sendPacket = new DatagramPacket(msgData, msgData.length, clientAddress, clientPort);
 								ds.send(sendPacket);
-								System.out.println("Message sent to client: " + msg + "\n");
+								System.out.println("Message sent to client: " + e + "\n");
 							}
 						} else {
 							// Invalid command format
 							try {
-								String msg = "Invalid command format, please use 'Joke <number>'.";
-								byte[] msgBytes = msg.getBytes();
-								DatagramPacket sendPacket = new DatagramPacket(msgBytes, msgBytes.length, clientAddress, clientPort);
+								String msg = "Invalid command format";
+								byte[] msgData = msg.getBytes();
+								DatagramPacket sendPacket = new DatagramPacket(msgData, msgData.length, clientAddress, clientPort);
 								ds.send(sendPacket);
 							} catch (IOException ioException) {
 								// Debugging

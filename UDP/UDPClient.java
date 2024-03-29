@@ -1,9 +1,5 @@
 import java.net.*;
 import java.io.*;
-import java.io.IOException; 
-import java.net.DatagramPacket; 
-import java.net.DatagramSocket; 
-import java.net.InetAddress;
 
 public class UDPClient {
 	private static final int cPort = 8000; // Client port number
@@ -12,15 +8,11 @@ public class UDPClient {
 		
 		try {
 			ds = new DatagramSocket();
+			ds.setSoTimeout(1000);
 			InetAddress ip = InetAddress.getLocalHost(); 
 			// Create a socket to connect to the server
 			System.out.println("Connected to localhost in port " + cPort);
 			System.out.println("Hello!");
-
-			// Initialize IO streams
-			//out = new ObjectOutputStream(requestSocket.getOutputStream());
-			//out.flush();
-			//in = new ObjectInputStream(requestSocket.getInputStream());
 
 			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
 			while (true) {
@@ -39,17 +31,73 @@ public class UDPClient {
 				}
 				// Receive the response from the server
 				try {
-					byte[] receiveData = new byte[1024];
-                	DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-					ds.receive(receivePacket);
-					String joke = new String(receivePacket.getData(), 0, receivePacket.getLength());
-					// If received "disconnected" message from server, terminate client and print "exit"
-					if ("disconnected".equals(joke)) {
-						System.out.println("exit");
-						break;
+					byte[] memeStr = new byte[1024];
+					DatagramPacket receive = new DatagramPacket(memeStr, memeStr.length);
+					ds.receive(receive);
+					String confirm = new String(receive.getData(), 0, receive.getLength());
+					InetAddress serverAddress = receive.getAddress();
+
+					// If the datagram sent is "memes", receive 10 image files
+					if (confirm.equals("memes")) {
+						int imageIndex = 1;
+						while (true) {
+
+							memeStr = new byte[1024];
+							receive = new DatagramPacket(memeStr, memeStr.length);
+							ds.receive(receive);
+							confirm = new String(receive.getData(), 0, receive.getLength());
+
+							if (confirm.equals("next")) {
+								try {
+									System.out.println("creating byte stream");
+									byte[] imageData = new byte[1024];
+									ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+									System.out.println("collecting fragments");
+									// Collect fragments and write them to a byte stream
+									while (true) {
+										try {
+											DatagramPacket receivePacket = new DatagramPacket(imageData, imageData.length);
+											ds.receive(receivePacket);
+											baos.write(imageData, 0, receivePacket.getLength());
+											if (receivePacket.getLength() < 1024) {
+												System.out.println("     limit reached, breaking");
+												break;
+											}
+										} catch (SocketTimeoutException e) {
+											System.err.println("Timeout occurred, skipping packet");
+											break;
+										}
+									}
+									
+									System.out.println("writing byte stream to file");
+									// Write byte stream to image file
+									imageData = baos.toByteArray();
+									String fileName = "received_image" + imageIndex + ".jpg";
+									FileOutputStream fos = new FileOutputStream(fileName);
+									fos.write(imageData);
+									fos.close();
+
+									System.out.println("Image " + imageIndex + " received and saved!");
+									imageIndex++;
+									
+									msg = "confirmation";
+									byte[] msgData = msg.getBytes();
+									DatagramPacket confirmation = new DatagramPacket(msgData, msgData.length, serverAddress, cPort);
+									ds.send(confirmation);
+
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+							}
+							else {
+								break;
+							}
+						}
+
+							
 					}
-					// Show the joke content to the user
-					System.out.println(joke);
+					
 				} catch (IOException ioException) {
 					ioException.printStackTrace();
 				}
