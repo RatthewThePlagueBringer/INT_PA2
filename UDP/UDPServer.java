@@ -12,6 +12,11 @@ public class UDPServer {
 		System.out.println("The server is running.");
 		DatagramSocket ds = null;
 
+		long startTime;
+		long endTime;
+
+		double[] localAccesses = new double[10];
+
 		try {
 			// Initialize IO streams
 			ds = new DatagramSocket(sPort);
@@ -48,38 +53,25 @@ public class UDPServer {
 
 							// Send the 10 memes in random order
 							try {
-								
 
 								// Create an array with all of the memes
 								ArrayList<File> images = new ArrayList<>();
-								System.out.println("appending images");
 
-								File image = new File("meme1.jpg");
-								images.add(image);
-								image = new File("meme2.jpg");
-								images.add(image);
-								image = new File("meme3.jpg");
-								images.add(image);
-								image = new File("meme4.jpg");
-								images.add(image);
-								image = new File("meme5.jpg");
-								images.add(image);
-								image = new File("meme6.jpg");
-								images.add(image);
-								image = new File("meme7.jpg");
-								images.add(image);
-								image = new File("meme8.jpg");
-								images.add(image);
-								image = new File("meme9.jpg");
-								images.add(image);
-								image = new File("meme10.jpg");
-								images.add(image);
-								System.out.println("images successfully appended to array");
+								for (int i = 1; i <= 10; i++) {
+									startTime = System.nanoTime();
+									File image = new File("meme" + i + ".jpg");
+									endTime = System.nanoTime();
+									double localAccess = (endTime - startTime) / 1e6;
+									localAccesses[i - 1] = localAccess;
+									System.out.println("Local Access Time " + i + ": " + localAccess + "ms");
+									images.add(image);
+								}
+								System.out.println();
+								System.out.println("Local Access Times Statistics");
+								printStats(localAccesses);
 
 								// Randomize the array
 								Collections.shuffle(images);
-								System.out.println("images shuffled, sending memes");
-								System.out.println(" ");
 								
 								for (File imageFile : images) {
 									
@@ -102,8 +94,6 @@ public class UDPServer {
 										DatagramPacket sendPacket = new DatagramPacket(chunkData, chunkData.length, clientAddress, clientPort);
 										ds.send(sendPacket);
 									}
-
-									System.out.println("Image sent");
 									
 									byte[] memeStr = new byte[1024];
 									DatagramPacket receive = new DatagramPacket(memeStr, memeStr.length);
@@ -118,7 +108,7 @@ public class UDPServer {
 								msgData = msg.getBytes();
 								DatagramPacket sendPacket = new DatagramPacket(msgData, msgData.length, clientAddress, clientPort);
 								ds.send(sendPacket);
-								System.out.println("Message sent to client: " + e + "\n");
+								System.out.println("Message sent to client: " + msg + "\n");
 							}
 						} else {
 							// Invalid command format
@@ -143,5 +133,38 @@ public class UDPServer {
 			ds.close();
 			//System.out.println("disconnected");
 		}
+	}
+	public static void printStats(double[] data) {
+		// Calculate minimum, maximum, and median
+		Arrays.sort(data);
+		double min = data[0];
+		double max = data[data.length - 1];
+		double median;
+		if (data.length % 2 == 0) {
+			median = (data[data.length / 2] + data[data.length / 2 - 1]) / 2.0;
+		} else {
+			median = data[data.length / 2];
+		}
+
+		// Mean
+		double sum = 0;
+		for (double value : data) {
+			sum += value;
+		}
+		double mean = sum / data.length;
+
+		// Calculate variance and standard deviation
+		double variance = 0;
+		for (double value : data) {
+			variance += Math.pow(value - mean, 2);
+		}
+		variance /= data.length;
+		double stddev = Math.sqrt(variance);
+
+		// Output results
+		System.out.println("Minimum: " + min);
+		System.out.println("Maximum: " + max);
+		System.out.println("Median: " + median);
+		System.out.println("Standard Deviation: " + stddev);
 	}
 }
