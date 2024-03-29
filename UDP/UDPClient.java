@@ -1,9 +1,5 @@
 import java.net.*;
 import java.io.*;
-import java.io.IOException; 
-import java.net.DatagramPacket; 
-import java.net.DatagramSocket; 
-import java.net.InetAddress;
 
 public class UDPClient {
 	private static final int cPort = 8000; // Client port number
@@ -16,11 +12,6 @@ public class UDPClient {
 			// Create a socket to connect to the server
 			System.out.println("Connected to localhost in port " + cPort);
 			System.out.println("Hello!");
-
-			// Initialize IO streams
-			//out = new ObjectOutputStream(requestSocket.getOutputStream());
-			//out.flush();
-			//in = new ObjectInputStream(requestSocket.getInputStream());
 
 			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
 			while (true) {
@@ -39,17 +30,64 @@ public class UDPClient {
 				}
 				// Receive the response from the server
 				try {
-					byte[] receiveData = new byte[1024];
-                	DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-					ds.receive(receivePacket);
-					String joke = new String(receivePacket.getData(), 0, receivePacket.getLength());
-					// If received "disconnected" message from server, terminate client and print "exit"
-					if ("disconnected".equals(joke)) {
-						System.out.println("exit");
-						break;
+					byte[] memeStr = new byte[1024];
+					DatagramPacket receive = new DatagramPacket(memeStr, memeStr.length);
+					ds.receive(receive);
+					String confirm = new String(receive.getData(), 0, receive.getLength());
+
+					// If the datagram sent is "memes", receive 10 image files
+					if (confirm.equals("memes")) {
+						int imageIndex = 1;
+						while (true) {
+
+							memeStr = new byte[1024];
+							receive = new DatagramPacket(memeStr, memeStr.length);
+							ds.receive(receive);
+							confirm = new String(receive.getData(), 0, receive.getLength());
+
+							if (confirm.equals("next")) {
+								try {
+									System.out.print("creating byte stream");
+									byte[] imageData = new byte[1024];
+									ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+									System.out.print("collecting fragments");
+									// Collect fragments and write them to a byte stream
+									while (true) {
+										DatagramPacket receivePacket = new DatagramPacket(imageData, imageData.length);
+										ds.receive(receivePacket);
+
+										baos.write(imageData, 0, receivePacket.getLength());
+
+										if (receivePacket.getLength() < 1024) {
+											break;
+										}
+									}
+
+									System.out.print("writing byte stream to file");
+									// Write byte stream to image file
+									String fileName = "received_image" + imageIndex + ".jpg";
+									FileOutputStream fos = new FileOutputStream(fileName);
+									fos.write(imageData);
+									fos.close();
+
+									System.out.println("Image " + imageIndex + " received and saved!");
+									imageIndex++;
+									
+
+
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+							}
+							else {
+								break;
+							}
+						}
+
+							
 					}
-					// Show the joke content to the user
-					System.out.println(joke);
+					
 				} catch (IOException ioException) {
 					ioException.printStackTrace();
 				}
