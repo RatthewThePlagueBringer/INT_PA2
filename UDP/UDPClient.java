@@ -8,6 +8,7 @@ public class UDPClient {
 		
 		try {
 			ds = new DatagramSocket();
+			ds.setSoTimeout(1000);
 			InetAddress ip = InetAddress.getLocalHost(); 
 			// Create a socket to connect to the server
 			System.out.println("Connected to localhost in port " + cPort);
@@ -34,6 +35,7 @@ public class UDPClient {
 					DatagramPacket receive = new DatagramPacket(memeStr, memeStr.length);
 					ds.receive(receive);
 					String confirm = new String(receive.getData(), 0, receive.getLength());
+					InetAddress serverAddress = receive.getAddress();
 
 					// If the datagram sent is "memes", receive 10 image files
 					if (confirm.equals("memes")) {
@@ -47,25 +49,30 @@ public class UDPClient {
 
 							if (confirm.equals("next")) {
 								try {
-									System.out.print("creating byte stream");
+									System.out.println("creating byte stream");
 									byte[] imageData = new byte[1024];
 									ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-									System.out.print("collecting fragments");
+									System.out.println("collecting fragments");
 									// Collect fragments and write them to a byte stream
 									while (true) {
-										DatagramPacket receivePacket = new DatagramPacket(imageData, imageData.length);
-										ds.receive(receivePacket);
-
-										baos.write(imageData, 0, receivePacket.getLength());
-
-										if (receivePacket.getLength() < 1024) {
+										try {
+											DatagramPacket receivePacket = new DatagramPacket(imageData, imageData.length);
+											ds.receive(receivePacket);
+											baos.write(imageData, 0, receivePacket.getLength());
+											if (receivePacket.getLength() < 1024) {
+												System.out.println("     limit reached, breaking");
+												break;
+											}
+										} catch (SocketTimeoutException e) {
+											System.err.println("Timeout occurred, skipping packet");
 											break;
 										}
 									}
-
-									System.out.print("writing byte stream to file");
+									
+									System.out.println("writing byte stream to file");
 									// Write byte stream to image file
+									imageData = baos.toByteArray();
 									String fileName = "received_image" + imageIndex + ".jpg";
 									FileOutputStream fos = new FileOutputStream(fileName);
 									fos.write(imageData);
@@ -74,7 +81,10 @@ public class UDPClient {
 									System.out.println("Image " + imageIndex + " received and saved!");
 									imageIndex++;
 									
-
+									msg = "confirmation";
+									byte[] msgData = msg.getBytes();
+									DatagramPacket confirmation = new DatagramPacket(msgData, msgData.length, serverAddress, cPort);
+									ds.send(confirmation);
 
 								} catch (IOException e) {
 									e.printStackTrace();

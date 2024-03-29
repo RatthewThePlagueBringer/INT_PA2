@@ -104,6 +104,12 @@ public class UDPServer {
 									}
 
 									System.out.println("Image sent");
+									
+									byte[] memeStr = new byte[1024];
+									DatagramPacket receive = new DatagramPacket(memeStr, memeStr.length);
+									ds.receive(receive);
+									String confirm = new String(receive.getData(), 0, receive.getLength());
+
 								}
 								System.out.println("All images sent!");
 
