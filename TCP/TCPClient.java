@@ -21,7 +21,7 @@ public class TCPClient {
 		try {
 			// Create a socket to connect to the server
 			startTime = System.nanoTime();
-			requestSocket = new Socket("localhost", cPort); //192.168.1.15
+			requestSocket = new Socket("localhost", cPort); // change ip for different machines
 			endTime = System.nanoTime();
 			double setupTime = (endTime - startTime) / 1e6;
 			System.out.println("TCP Setup Time: " + setupTime + " ms");
@@ -57,7 +57,7 @@ public class TCPClient {
 					if ("memes".equals(memeStr)) {
 						int imageIndex = 1;
 						while (true) {
-							TimeUnit.SECONDS.sleep(1);
+							TimeUnit.SECONDS.sleep(3);
 							memeStr = (String) in.readObject();
 							if (memeStr.equals("next")) {
 								byte[] imageData = null;
