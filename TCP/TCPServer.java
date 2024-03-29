@@ -89,6 +89,10 @@ public class TCPServer {
 									out.flush();
 									out.reset();
 
+									out.writeObject("confirmation");
+									out.flush();
+									out.reset();
+
 									// Wait for confirmation from the client
 									String confirmation = (String) in.readObject();
 								}
